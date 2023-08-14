@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pomodoro/models/pomodoro_status.dart';
 import 'package:pomodoro/utils/constants.dart';
-import 'package:pomodoro/widget/timepicker.dart';
 import 'widget/progress_icons.dart';
 import 'widget/custom_button.dart';
 
