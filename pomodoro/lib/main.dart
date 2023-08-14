@@ -1,4 +1,13 @@
+// ignore_for_file: constant_pattern_never_matches_value_type
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:pomodoro/models/pomodoro_status.dart';
+import 'package:pomodoro/utils/constants.dart';
+import 'widget/progress_icons.dart';
+import 'widget/custom_button.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,119 +16,217 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static const MaterialColor primaryBlack = MaterialColor(
+    _blackPrimaryValue,
+    <int, Color>{
+      50: Color(0xFF000000),
+      100: Color(0xFF000000),
+      200: Color(0xFF000000),
+      300: Color(0xFF000000),
+      400: Color(0xFF000000),
+      500: Color(_blackPrimaryValue),
+      600: Color(0xFF000000),
+      700: Color(0xFF000000),
+      800: Color(0xFF000000),
+      900: Color(0xFF000000),
+    },
+  );
+  static const int _blackPrimaryValue = 0xFF000000;
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'PomodoroAPP'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
-
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+const _btnTextStart = 'START POMODORO';
+const _btnTextResumePomodoro = 'RESUME POMODORO';
+const _btnTextResumeBreak = 'RESUME BREAK';
+const _btnTextStartShortBreak = 'TAKE SHORT BREAK';
+const _btnTextStartLongBreak = 'TAKE LONG BREAK';
+const _btnTextStartNewSet = ' START NEW SET';
+const _btnTextPause = 'PAUSE';
+const _btnTextReset = 'RESET';
+Timer? _timer;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _MyHomePageState extends State<MyHomePage> {
+  int remainingTime = pomodoroTotalTime;
+  String mainBtnText = _btnTextStart;
+  int pomodoroNum = 0;
+  int setNum = 0;
+  PomodoroStatus pomodoroStatus = PomodoroStatus.pausedPomodoro;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      backgroundColor: MyApp.primaryBlack,
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        centerTitle: true,
+        backgroundColor: MyApp.primaryBlack,
+        // ignore: prefer_const_constructors
+        title: Text(
+          'SEJA MAIS PRODUTIVO',
+          style:
+              // ignore: prefer_const_constructors
+              TextStyle(color: Color(0xffffffff), fontWeight: FontWeight.w900),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      // ignore: prefer_const_constructors
+      body: SafeArea(
+        // ignore: prefer_const_constructors
+        child: Center(
+          // ignore: prefer_const_constructors
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            // ignore: prefer_const_literals_to_create_immutables
+            children: [
+              const SizedBox(
+                height: 20,
+              ),
+              Text(
+                'Sequencia do Pomodoro $pomodoroNum',
+                style: const TextStyle(fontSize: 22, color: Colors.white),
+              ),
+              // ignore: prefer_const_constructors
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularPercentIndicator(
+                      radius: 120.0,
+                      lineWidth: 5.0,
+                      percent: 0.3,
+                      circularStrokeCap: CircularStrokeCap.round,
+                      // ignore: prefer_const_constructors
+                      center: Text(_secondsToFormatedString(remainingTime),
+                          // ignore: prefer_const_constructors
+                          style: TextStyle(
+                              fontSize: 40,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900)),
+                      progressColor: statusColor[pomodoroStatus],
+                      // ignore: prefer_const_constructors
+                    ),
+                    // ignore: prefer_const_constructors
+                    ProgressIcons(
+                      total: pomodoroPerSet,
+                      done: pomodoroNum - (setNum * pomodoroPerSet),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      statusDescription[pomodoroStatus]!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    CustomButtom(onTap: _mainButtonPressed, text: mainBtnText),
+                    CustomButtom(onTap: () {}, text: 'Zerar'),
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  _secondsToFormatedString(int seconds) {
+    int roundedMinutes = seconds ~/ 60;
+    int remainingSeconds = seconds - (roundedMinutes * 60);
+    String remainingSecondsFormated;
+
+    if (remainingSeconds < 10) {
+      remainingSecondsFormated = '0$remainingSeconds';
+    } else {
+      remainingSecondsFormated = remainingSeconds.toString();
+    }
+    return '$roundedMinutes:$remainingSecondsFormated';
+  }
+
+  _mainButtonPressed() {
+    switch (pomodoroStatus) {
+      case PomodoroStatus.pausedPomodoro:
+        _startPomodoroCountdown();
+        break;
+      case PomodoroStatus.runningPomodoro:
+        {}
+        break;
+      case PomodoroStatus.pausedShortBreak:
+        {}
+        break;
+      case PomodoroStatus.runningLongBreak:
+        {}
+        break;
+      case PomodoroStatus.pausedLongBreak:
+        {}
+        break;
+      case PomodoroStatus.setFinished:
+        {}
+        break;
+      default:
+    }
+  }
+
+  _startPomodoroCountdown() {
+    pomodoroStatus = PomodoroStatus.runningPomodoro;
+
+    _cancelTimer();
+    _timer = Timer.periodic(
+        // ignore: prefer_const_constructors
+        Duration(seconds: 1),
+        (timer) => {
+              if (remainingTime > 0)
+                {
+                  setState(() {
+                    remainingTime--;
+                    mainBtnText = _btnTextPause;
+                  })
+                }
+              else
+                {
+                  //playSound(),
+                  pomodoroNum++,
+                  _cancelTimer(),
+                  if (pomodoroNum % pomodoroPerSet == 0)
+                    {
+                      pomodoroStatus = PomodoroStatus.pausedLongBreak,
+                      setState(() {
+                        remainingTime = longBreakTime;
+                        mainBtnText = _btnTextStartLongBreak;
+                      }),
+                    }
+                  else
+                    {
+                      pomodoroStatus = PomodoroStatus.pausedShortBreak,
+                      setState(() {
+                        remainingTime = shortBreakTime;
+                        mainBtnText = _btnTextStartShortBreak;
+                      }),
+                    }
+                }
+            });
+  }
+
+  _cancelTimer() {
+    if (_timer != null) {
+      _timer?.cancel();
+    }
   }
 }
