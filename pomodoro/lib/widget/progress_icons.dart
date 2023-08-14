@@ -4,19 +4,20 @@ class ProgressIcons extends StatelessWidget {
   final int total;
   final int done;
 
-  const ProgressIcons({required this.total, required this.done});
+  const ProgressIcons({super.key, required this.total, required this.done});
 
   @override
   Widget build(BuildContext context) {
+    // ignore: prefer_const_declarations
     final iconSize = 50.0;
     final doneIcon = Icon(
-      Icons.beenhere,
-      color: Colors.red,
+      Icons.alarm_add,
+      color: Colors.deepPurple,
       size: iconSize,
     );
     final notDoneIcon = Icon(
-      Icons.beenhere_outlined,
-      color: Colors.red[200],
+      Icons.alarm_off,
+      color: Colors.deepPurple.shade100,
       size: iconSize,
     );
 

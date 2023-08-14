@@ -1,11 +1,9 @@
-// ignore_for_file: constant_pattern_never_matches_value_type
-
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:pomodoro/models/pomodoro_status.dart';
 import 'package:pomodoro/utils/constants.dart';
+import 'package:pomodoro/widget/timepicker.dart';
 import 'widget/progress_icons.dart';
 import 'widget/custom_button.dart';
 
@@ -48,26 +46,41 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-const _btnTextStart = 'START POMODORO';
-const _btnTextResumePomodoro = 'RESUME POMODORO';
-const _btnTextResumeBreak = 'RESUME BREAK';
-const _btnTextStartShortBreak = 'TAKE SHORT BREAK';
-const _btnTextStartLongBreak = 'TAKE LONG BREAK';
-const _btnTextStartNewSet = ' START NEW SET';
-const _btnTextPause = 'PAUSE';
-const _btnTextReset = 'RESET';
+String _btnTextStart = 'COMEÇAR';
+String _btnTextResumePomodoro = 'VOLTAR AO FOCO';
+String _btnTextResumeBreak = 'RETOMAR INTERVALO';
+String _btnTextStartShortBreak = 'FAZER INTERVALO CURTO';
+String _btnTextStartLongBreak = 'FAZER INTERVALO LONGO';
+String _btnTextStartNewSet = 'INICIAR NOVA BATALHA';
+String _btnTextPause = 'PAUSAR';
+String _btnTextReset = 'REINICIAR';
+
 Timer? _timer;
 
 class _MyHomePageState extends State<MyHomePage> {
+  // static AudioCache player = AudioCache();
   int remainingTime = pomodoroTotalTime;
   String mainBtnText = _btnTextStart;
   int pomodoroNum = 0;
   int setNum = 0;
   PomodoroStatus pomodoroStatus = PomodoroStatus.pausedPomodoro;
+
+  @override
+  void dispose() {
+    _cancelTimer();
+    super.dispose();
+  }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   player.load('bell.mp3');
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -87,28 +100,80 @@ class _MyHomePageState extends State<MyHomePage> {
       // ignore: prefer_const_constructors
       body: SafeArea(
         // ignore: prefer_const_constructors
-        child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 20), // Espaçamento superior
+
           // ignore: prefer_const_constructors
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             // ignore: prefer_const_literals_to_create_immutables
             children: [
-              const SizedBox(
-                height: 20,
-              ),
-              Text(
-                'Sequencia do Pomodoro $pomodoroNum',
-                style: const TextStyle(fontSize: 22, color: Colors.white),
-              ),
               // ignore: prefer_const_constructors
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const Row(
+                      children: [
+                        // TextButton.icon(
+                        //   icon: const Icon(Icons.alarm),
+                        //   label: const Text('Tempo de foco'),
+                        //   onPressed: () async {
+                        //     final TimeOfDay? selectedTime =
+                        //         await showTimePicker(
+                        //       context: context,
+                        //       initialTime: TimeOfDay.now(),
+                        //       builder: (BuildContext context, Widget? child) {
+                        //         return MediaQuery(
+                        //           data: MediaQuery.of(context)
+                        //               .copyWith(alwaysUse24HourFormat: true),
+                        //           child: child!,
+                        //         );
+                        //       },
+                        //     );
+
+                        //     if (selectedTime != null) {
+                        //       String formattedTime =
+                        //           selectedTime.format(context);
+
+                        //       showModalBottomSheet<void>(
+                        //         context: context,
+                        //         builder: (BuildContext context) {
+                        //           return Column(
+                        //             mainAxisSize: MainAxisSize.min,
+                        //             children: <Widget>[
+                        //               const ListTile(
+                        //                 title: Text('Definir tempo de foco'),
+                        //               ),
+                        //               const SizedBox(height: 8),
+                        //               Text(
+                        //                 'Tempo selecionado: $formattedTime',
+                        //                 style: TextStyle(fontSize: 16),
+                        //               ),
+                        //               const SizedBox(height: 8),
+                        //               ElevatedButton(
+                        //                 onPressed: () {
+                        //                   // Processar o tempo selecionado (formattedTime)
+                        //                   Navigator.pop(context);
+                        //                 },
+                        //                 child: const Text('Confirmar'),
+                        //               ),
+                        //             ],
+                        //           );
+                        //         },
+                        //       );
+                        //     }
+                        //   },
+                        // )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 60,
+                    ),
                     CircularPercentIndicator(
-                      radius: 120.0,
-                      lineWidth: 5.0,
-                      percent: 0.3,
+                      radius: 110,
+                      lineWidth: 5,
+                      percent: _getPomodoroPercentage(),
                       circularStrokeCap: CircularStrokeCap.round,
                       // ignore: prefer_const_constructors
                       center: Text(_secondsToFormatedString(remainingTime),
@@ -118,7 +183,11 @@ class _MyHomePageState extends State<MyHomePage> {
                               color: Colors.white,
                               fontWeight: FontWeight.w900)),
                       progressColor: statusColor[pomodoroStatus],
+                      backgroundColor: Colors.deepPurple.shade100,
                       // ignore: prefer_const_constructors
+                    ),
+                    const SizedBox(
+                      height: 60,
                     ),
                     // ignore: prefer_const_constructors
                     ProgressIcons(
@@ -126,17 +195,25 @@ class _MyHomePageState extends State<MyHomePage> {
                       done: pomodoroNum - (setNum * pomodoroPerSet),
                     ),
                     const SizedBox(
-                      height: 10,
+                      height: 40,
                     ),
                     Text(
                       statusDescription[pomodoroStatus]!,
                       style: const TextStyle(color: Colors.white),
                     ),
                     const SizedBox(
-                      height: 10,
+                      height: 100,
                     ),
-                    CustomButtom(onTap: _mainButtonPressed, text: mainBtnText),
-                    CustomButtom(onTap: () {}, text: 'Zerar'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment
+                          .spaceEvenly, // Espaço igual entre os botões
+                      children: [
+                        CustomButtom(
+                            onTap: _mainButtonPressed, text: mainBtnText),
+                        CustomButtom(
+                            onTap: _resumeButtonPressed, text: _btnTextReset),
+                      ],
+                    ),
                   ],
                 ),
               )
@@ -166,22 +243,107 @@ class _MyHomePageState extends State<MyHomePage> {
         _startPomodoroCountdown();
         break;
       case PomodoroStatus.runningPomodoro:
-        {}
+        _pausePomodoroCountdown();
         break;
       case PomodoroStatus.pausedShortBreak:
-        {}
+        _startShortBreak();
         break;
       case PomodoroStatus.runningLongBreak:
-        {}
+        _pauseLongBreakCountdown();
         break;
       case PomodoroStatus.pausedLongBreak:
-        {}
+        _startLongBreak();
         break;
       case PomodoroStatus.setFinished:
-        {}
+        setNum++;
+        _startPomodoroCountdown();
         break;
       default:
     }
+  }
+
+  _startLongBreak() {
+    pomodoroStatus = PomodoroStatus.runningShortBreak;
+    setState(() {
+      mainBtnText = _btnTextPause;
+    });
+    _cancelTimer();
+    _timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (timer) => {
+              if (remainingTime > 0)
+                {
+                  setState(() {
+                    remainingTime--;
+                  }),
+                }
+              else
+                {
+                  _playSound(),
+                  remainingTime = pomodoroTotalTime,
+                  _cancelTimer(),
+                  pomodoroStatus = PomodoroStatus.setFinished,
+                  setState(() {
+                    mainBtnText = _btnTextStartNewSet;
+                  })
+                }
+            });
+  }
+
+  _startShortBreak() {
+    pomodoroStatus = PomodoroStatus.runningShortBreak;
+    setState(() {
+      mainBtnText = _btnTextPause;
+    });
+    _cancelTimer();
+    _timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (timer) => {
+              if (remainingTime > 0)
+                {
+                  setState(() {
+                    remainingTime--;
+                  }),
+                }
+              else
+                {
+                  _playSound(),
+                  remainingTime = pomodoroTotalTime,
+                  _cancelTimer(),
+                  pomodoroStatus = PomodoroStatus.pausedPomodoro,
+                  setState(() {
+                    mainBtnText = _btnTextStart;
+                  })
+                }
+            });
+  }
+
+  _getPomodoroPercentage() {
+    int totalTime = pomodoroTotalTime;
+    switch (pomodoroStatus) {
+      case PomodoroStatus.pausedPomodoro:
+        totalTime = pomodoroTotalTime;
+        break;
+      case PomodoroStatus.runningPomodoro:
+        totalTime = pomodoroTotalTime;
+        break;
+      case PomodoroStatus.pausedShortBreak:
+        totalTime = shortBreakTime;
+        _startShortBreak();
+        break;
+      case PomodoroStatus.runningLongBreak:
+        totalTime = longBreakTime;
+        break;
+      case PomodoroStatus.pausedLongBreak:
+        totalTime = longBreakTime;
+        break;
+      case PomodoroStatus.setFinished:
+        totalTime = pomodoroTotalTime;
+        break;
+      default:
+    }
+    double percentage = (totalTime - remainingTime) / totalTime;
+    return percentage;
   }
 
   _startPomodoroCountdown() {
@@ -201,7 +363,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               else
                 {
-                  //playSound(),
+                  _playSound(),
                   pomodoroNum++,
                   _cancelTimer(),
                   if (pomodoroNum % pomodoroPerSet == 0)
@@ -224,9 +386,54 @@ class _MyHomePageState extends State<MyHomePage> {
             });
   }
 
+  _pausePomodoroCountdown() {
+    pomodoroStatus = PomodoroStatus.pausedPomodoro;
+    _cancelTimer();
+    setState(() {
+      mainBtnText = _btnTextResumePomodoro;
+    });
+  }
+
+  _pauseLongBreakCountdown() {
+    pomodoroStatus = PomodoroStatus.pausedLongBreak;
+    _pausedBreakCountdown();
+  }
+
+  // _pauseShortBreakCountdown() {
+  //   pomodoroStatus = PomodoroStatus.pausedShortBreak;
+  //   _pausedBreakCountdown();
+  // }
+
+  _pausedBreakCountdown() {
+    _cancelTimer();
+    setState(() {
+      mainBtnText = _btnTextResumeBreak;
+    });
+  }
+
+  _resumeButtonPressed() {
+    pomodoroNum = 0;
+    setNum = 0;
+    _cancelTimer();
+    _stopCountdown();
+  }
+
+  _stopCountdown() {
+    pomodoroStatus = PomodoroStatus.pausedPomodoro;
+    setState(() {
+      mainBtnText = _btnTextStart;
+      remainingTime = pomodoroTotalTime;
+    });
+  }
+
   _cancelTimer() {
     if (_timer != null) {
       _timer?.cancel();
     }
   }
+}
+
+_playSound() {
+  // player.play('bell.mp3');
+  // print('som');
 }
